@@ -128,3 +128,7 @@ void uniform_i1(uint32_t shader,const char *name,int32_t val){
 void uniform_mat4(uint32_t shader,const char *name,mat4 val){
     glUniformMatrix4fv(glGetUniformLocation(shader,name),1,GL_FALSE,val[0]);
 }
+
+void uniform_v3(uint32_t shader,const char *name,float x,float y,float z){
+    glUniform3f(glGetUniformLocation(shader,name),x,y,z);
+}
