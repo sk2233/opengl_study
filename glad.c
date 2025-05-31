@@ -132,3 +132,7 @@ void uniform_mat4(uint32_t shader,const char *name,mat4 val){
 void uniform_v3(uint32_t shader,const char *name,float x,float y,float z){
     glUniform3f(glGetUniformLocation(shader,name),x,y,z);
 }
+
+void uniform_f1(uint32_t shader,const char *name,float val){
+    glUniform1f(glGetUniformLocation(shader,name),val);
+}

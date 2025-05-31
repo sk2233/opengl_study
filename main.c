@@ -27,8 +27,9 @@ int main(){
     uint32_t lightShader = open_shader("/Users/bytedance/Documents/c/open_gl/light.vert", "/Users/bytedance/Documents/c/open_gl/light.frag");
 
     uint32_t cubeVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_v), cube_v, GL_STATIC_DRAW);
-    vertex_attr(0,3,3,0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vn), cube_vn, GL_STATIC_DRAW);
+    vertex_attr(0,3,6,0);
+    vertex_attr(1,3,6,3);
     uint32_t lightVao= create_vao(); // 创建并绑定了
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_v), cube_v, GL_STATIC_DRAW);
     vertex_attr(0,3,3,0);
@@ -40,15 +41,20 @@ int main(){
     uniform_mat4(cubeShader, "model", GLM_MAT4_IDENTITY);
     uniform_mat4(cubeShader, "view", view);
     uniform_mat4(cubeShader, "projection", proj);
-    uniform_v3(cubeShader,"objectColor", 1.0f, 0.5f, 0.31f);
-    uniform_v3(cubeShader,"lightColor", 1.0f, 1.0f, 1.0f);
+    uniform_v3(cubeShader,"lightColor", 1.0f, 1, 1);
+    uniform_v3(cubeShader,"lightPos", 1.2f, 1, 2);
+    uniform_v3(cubeShader,"viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+    uniform_v3(cubeShader,"ambient", 1.0f, 0.5f, 0.31f);
+    uniform_v3(cubeShader,"diffuse", 1.0f, 0.5f, 0.31f);
+    uniform_v3(cubeShader,"specular", 0.5f, 0.5f, 0.5f);
+    uniform_f1(cubeShader,"shininess", 32);
     glUseProgram(lightShader);
     mat4 model=GLM_MAT4_IDENTITY;
     translate(model,1.2f,1,2);
     scale(model,0.2f,0.2f,0.2f);
-    uniform_mat4(cubeShader, "model", model);
-    uniform_mat4(cubeShader, "view", view);
-    uniform_mat4(cubeShader, "projection", proj);
+    uniform_mat4(lightShader, "model", model);
+    uniform_mat4(lightShader, "view", view);
+    uniform_mat4(lightShader, "projection", proj);
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)){

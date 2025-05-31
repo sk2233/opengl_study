@@ -21,5 +21,6 @@ uint32_t create_texture(const char *filename,uint32_t idx);
 void uniform_i1(uint32_t shader,const char *name,int32_t val);
 void uniform_mat4(uint32_t shader,const char *name,mat4 val);
 void uniform_v3(uint32_t shader,const char *name,float x,float y,float z);
+void uniform_f1(uint32_t shader,const char *name,float val);
 
 #endif
