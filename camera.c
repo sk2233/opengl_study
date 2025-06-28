@@ -3,7 +3,7 @@
 
 void camera_update(camera_t *camera,GLFWwindow* window){
     // 按键控制
-    vec3 offset=GLM_VEC3_ZERO;
+    float* offset = GLM_VEC3_ZERO;
     if(glfwGetKey(window,GLFW_KEY_W)==GLFW_PRESS){
         glm_vec3_scale(camera->front,0.05f,offset);
     } else if(glfwGetKey(window,GLFW_KEY_S)==GLFW_PRESS){

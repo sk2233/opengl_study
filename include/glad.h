@@ -16,6 +16,7 @@ void close_vao(uint32_t vao);
 void vertex_attr(uint32_t index, int32_t size,int step,int offset);
 
 uint32_t create_texture(const char *filename,uint32_t idx);
+void set_texture(uint32_t idx,uint32_t texture);
 
 // 快捷使用
 void uniform_i1(uint32_t shader,const char *name,int32_t val);

@@ -23,33 +23,41 @@ int main(){
     glfwSetKeyCallback(window,key_callback);
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    uint32_t cubeShader = open_shader("/Users/bytedance/Documents/c/open_gl/cube.vert", "/Users/bytedance/Documents/c/open_gl/cube.frag");
-    uint32_t lightShader = open_shader("/Users/bytedance/Documents/c/open_gl/light.vert", "/Users/bytedance/Documents/c/open_gl/light.frag");
+    uint32_t cubeShader = open_shader("/Users/sky/Documents/c/open_gl/cube.vert", "/Users/sky/Documents/c/open_gl/cube.frag");
+    uint32_t lightShader = open_shader("/Users/sky/Documents/c/open_gl/light.vert", "/Users/sky/Documents/c/open_gl/light.frag");
 
     uint32_t cubeVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vn), cube_vn, GL_STATIC_DRAW);
-    vertex_attr(0,3,6,0);
-    vertex_attr(1,3,6,3);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_nvt), cube_nvt, GL_STATIC_DRAW);
+    vertex_attr(0,3,8,0);
+    vertex_attr(1,3,8,3);
+    vertex_attr(2,2,8,6);
     uint32_t lightVao= create_vao(); // 创建并绑定了
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_v), cube_v, GL_STATIC_DRAW);
     vertex_attr(0,3,3,0);
 
-    mat4 view=GLM_MAT4_IDENTITY;
-    mat4 proj=GLM_MAT4_IDENTITY;
+    vec4* view = GLM_MAT4_IDENTITY;
+    vec4* proj = GLM_MAT4_IDENTITY;
     glm_perspective(GLM_PI_4,16.0f/9,0.1f,100,proj);
     glUseProgram(cubeShader);
     uniform_mat4(cubeShader, "model", GLM_MAT4_IDENTITY);
     uniform_mat4(cubeShader, "view", view);
     uniform_mat4(cubeShader, "projection", proj);
     uniform_v3(cubeShader,"lightColor", 1.0f, 1, 1);
-    uniform_v3(cubeShader,"lightPos", 1.2f, 1, 2);
+    // 设置手电筒的位置与范围
+    uniform_v3(cubeShader,"lightPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+    uniform_v3(cubeShader,"lightDir", camera.front[0], camera.front[1], camera.front[2]);
+    uniform_f1(cubeShader,"lightCutOff",cosf(M_PI_4));
     uniform_v3(cubeShader,"viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
-    uniform_v3(cubeShader,"ambient", 1.0f, 0.5f, 0.31f);
-    uniform_v3(cubeShader,"diffuse", 1.0f, 0.5f, 0.31f);
-    uniform_v3(cubeShader,"specular", 0.5f, 0.5f, 0.5f);
-    uniform_f1(cubeShader,"shininess", 32);
+    uint32_t diffuse = create_texture("/Users/sky/Documents/c/open_gl/res/container2.png",GL_TEXTURE0);
+    set_texture(GL_TEXTURE0,diffuse); // 这里不设置也行，创建纹理后一直没有改过
+    uniform_i1(cubeShader,"diffuse",0); // 默认就是 0
+    uint32_t specular = create_texture("/Users/sky/Documents/c/open_gl/res/container2_specular.png",GL_TEXTURE1);
+    set_texture(GL_TEXTURE1,specular); // 这里不设置也行，创建纹理后一直没有改过
+    uniform_i1(cubeShader,"specular",1);
+    uniform_f1(cubeShader,"shininess", 64);
+    // uniform_v3(cubeShader,"test.Color",1,1,1); // 可以直接使用结构体  也推荐使用结构体
     glUseProgram(lightShader);
-    mat4 model=GLM_MAT4_IDENTITY;
+    vec4* model = GLM_MAT4_IDENTITY;
     translate(model,1.2f,1,2);
     scale(model,0.2f,0.2f,0.2f);
     uniform_mat4(lightShader, "model", model);
@@ -65,6 +73,10 @@ int main(){
         camera_view(&camera,view);
         glUseProgram(cubeShader);
         uniform_mat4(cubeShader, "view", view);
+        uniform_v3(cubeShader,"viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+        // 更新手电筒信息
+        uniform_v3(cubeShader,"lightPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+        uniform_v3(cubeShader,"lightDir", camera.front[0], camera.front[1], camera.front[2]);
         glBindVertexArray(cubeVao);
         glDrawArrays(GL_TRIANGLES,0,36);
         glUseProgram(lightShader);
