@@ -23,46 +23,27 @@ int main(){
     glfwSetKeyCallback(window,key_callback);
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    uint32_t cubeShader = open_shader("/Users/sky/Documents/c/open_gl/cube.vert", "/Users/sky/Documents/c/open_gl/cube.frag");
-    uint32_t lightShader = open_shader("/Users/sky/Documents/c/open_gl/light.vert", "/Users/sky/Documents/c/open_gl/light.frag");
+    uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/depth_test.vert", "/Users/sky/Documents/c/open_gl/depth_test.frag");
 
     uint32_t cubeVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_nvt), cube_nvt, GL_STATIC_DRAW);
-    vertex_attr(0,3,8,0);
-    vertex_attr(1,3,8,3);
-    vertex_attr(2,2,8,6);
-    uint32_t lightVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_v), cube_v, GL_STATIC_DRAW);
-    vertex_attr(0,3,3,0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vt), cube_vt, GL_STATIC_DRAW);
+    vertex_attr(0,3,5,0);
+    vertex_attr(1,2,5,3);
+    uint32_t planVao= create_vao(); // 创建并绑定了
+    glBufferData(GL_ARRAY_BUFFER, sizeof(plan_vt), plan_vt, GL_STATIC_DRAW);
+    vertex_attr(0,3,5,0);
+    vertex_attr(1,2,5,3);
 
     vec4* view = GLM_MAT4_IDENTITY;
     vec4* proj = GLM_MAT4_IDENTITY;
     glm_perspective(GLM_PI_4,16.0f/9,0.1f,100,proj);
-    glUseProgram(cubeShader);
-    uniform_mat4(cubeShader, "model", GLM_MAT4_IDENTITY);
-    uniform_mat4(cubeShader, "view", view);
-    uniform_mat4(cubeShader, "projection", proj);
-    uniform_v3(cubeShader,"lightColor", 1.0f, 1, 1);
-    // 设置手电筒的位置与范围
-    uniform_v3(cubeShader,"lightPos", camera.pos[0], camera.pos[1], camera.pos[2]);
-    uniform_v3(cubeShader,"lightDir", camera.front[0], camera.front[1], camera.front[2]);
-    uniform_f1(cubeShader,"lightCutOff",cosf(M_PI_4));
-    uniform_v3(cubeShader,"viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
-    uint32_t diffuse = create_texture("/Users/sky/Documents/c/open_gl/res/container2.png",GL_TEXTURE0);
-    set_texture(GL_TEXTURE0,diffuse); // 这里不设置也行，创建纹理后一直没有改过
-    uniform_i1(cubeShader,"diffuse",0); // 默认就是 0
-    uint32_t specular = create_texture("/Users/sky/Documents/c/open_gl/res/container2_specular.png",GL_TEXTURE1);
-    set_texture(GL_TEXTURE1,specular); // 这里不设置也行，创建纹理后一直没有改过
-    uniform_i1(cubeShader,"specular",1);
-    uniform_f1(cubeShader,"shininess", 64);
-    // uniform_v3(cubeShader,"test.Color",1,1,1); // 可以直接使用结构体  也推荐使用结构体
-    glUseProgram(lightShader);
-    vec4* model = GLM_MAT4_IDENTITY;
-    translate(model,1.2f,1,2);
-    scale(model,0.2f,0.2f,0.2f);
-    uniform_mat4(lightShader, "model", model);
-    uniform_mat4(lightShader, "view", view);
-    uniform_mat4(lightShader, "projection", proj);
+    glUseProgram(shader);
+    uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
+    uniform_mat4(shader, "view", view);
+    uniform_mat4(shader, "projection", proj);
+
+    uint32_t cube_tex= create_texture("/Users/sky/Documents/c/open_gl/res/container2.png",GL_TEXTURE0);
+    uint32_t plan_tex= create_texture("/Users/sky/Documents/c/open_gl/res/81847920.jpg",GL_TEXTURE0);
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)){
@@ -71,26 +52,32 @@ int main(){
         camera_update(&camera,window);
 
         camera_view(&camera,view);
-        glUseProgram(cubeShader);
-        uniform_mat4(cubeShader, "view", view);
-        uniform_v3(cubeShader,"viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
-        // 更新手电筒信息
-        uniform_v3(cubeShader,"lightPos", camera.pos[0], camera.pos[1], camera.pos[2]);
-        uniform_v3(cubeShader,"lightDir", camera.front[0], camera.front[1], camera.front[2]);
+        glUseProgram(shader);
+        // 通用设置
+        uniform_mat4(shader, "view", view);
+        // 绘制 cube
         glBindVertexArray(cubeVao);
+        set_texture(GL_TEXTURE0,cube_tex);
+        vec4* model = GLM_MAT4_IDENTITY;
+        translate(model,-1,0,-1);
+        uniform_mat4(shader, "model", model);
         glDrawArrays(GL_TRIANGLES,0,36);
-        glUseProgram(lightShader);
-        uniform_mat4(lightShader, "view", view);
-        glBindVertexArray(lightVao);
+        model = GLM_MAT4_IDENTITY;
+        translate(model,2,0,0);
+        uniform_mat4(shader, "model", model);
         glDrawArrays(GL_TRIANGLES,0,36);
+        // 绘制 plan
+        glBindVertexArray(planVao);
+        set_texture(GL_TEXTURE0,plan_tex);
+        uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
+        glDrawArrays(GL_TRIANGLES,0,6);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     close_vao(cubeVao);
-    close_vao(lightVao);
-    close_shader(cubeShader);
-    close_shader(lightShader);
+    close_vao(planVao);
+    close_shader(shader);
     glfwTerminate();
     return 0;
 }

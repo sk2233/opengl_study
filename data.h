@@ -133,7 +133,7 @@ static float cube_vn[]={
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 
-static float cube_nvt[]={
+static float cube_vnt[]={
         // positions          // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -176,6 +176,16 @@ static float cube_nvt[]={
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
+};
+
+static float plan_vt[]={
+    5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+       -5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
+       -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+
+        5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+       -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+        5.0f, -0.5f, -5.0f,  2.0f, 2.0f
 };
 
 #endif
