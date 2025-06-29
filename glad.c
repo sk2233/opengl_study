@@ -4,7 +4,8 @@
 #include "ok_jpg.h"
 #include "string.h"
 
-uint32_t open_shader(const char *vert,const char *frag){
+// geom 是可选的
+uint32_t open_shader(const char *vert,const char *frag,const char *geom){
     int success;
     char infoLog[512];
 
@@ -30,9 +31,26 @@ uint32_t open_shader(const char *vert,const char *frag){
     }
     free(data);
 
+    uint32_t gShader=0;
+    if (geom!=NULL){
+        gShader = glCreateShader(GL_GEOMETRY_SHADER);
+        data=read_all(geom);
+        glShaderSource(gShader,1,&data,NULL);
+        glCompileShader(gShader);
+        glGetShaderiv(gShader, GL_COMPILE_STATUS, &success);
+        if (!success){
+            glGetShaderInfoLog(gShader, 512, NULL, infoLog);
+            printf("geom %s err info %s\n%s\n",geom,infoLog,data);
+        }
+        free(data);
+    }
+
     uint32_t program = glCreateProgram();
     glAttachShader(program, vShader);
     glAttachShader(program, fShader);
+    if (geom!=NULL){
+        glAttachShader(program, gShader);
+    }
     glLinkProgram(program);
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (!success) {
@@ -41,6 +59,9 @@ uint32_t open_shader(const char *vert,const char *frag){
     }
     glDeleteShader(vShader);
     glDeleteShader(fShader);
+    if (geom!=NULL){
+        glDeleteShader(gShader);
+    }
     return program;
 }
 
@@ -206,4 +227,107 @@ frame_buff_t *create_frame_buff(int width,int height){
         printf("create_frame_buff err");
     }
     return frame_buff;
+}
+
+void parse_float(float *arr,char *line){
+    int idx=0;
+    while (1){
+        arr[idx++]= strtof(line,NULL);
+        while (*line!=' '&&*line!='\n'){
+            line++;
+        }
+        if (*line=='\n'){
+            break;
+        }
+        line++;
+    }
+}
+
+void parse_face(float *arr,char *line,float *vs,float *vts,float *vns){
+    int idx=0;
+    for (int i = 0; i < 3; ++i){ // v vt vn
+        long num= strtol(line,NULL,10);
+        arr[idx++]=vs[(num-1)*3];
+        arr[idx++]=vs[(num-1)*3+1];
+        arr[idx++]=vs[(num-1)*3+2];
+        while (*line!='/'){
+            line++;
+        }
+        line++;
+        num= strtol(line,NULL,10);
+        arr[idx++]=vts[(num-1)*2];
+        arr[idx++]=vts[(num-1)*2+1];
+        while (*line!='/'){
+            line++;
+        }
+        line++;
+        num= strtol(line,NULL,10);
+        arr[idx++]=vns[(num-1)*3];
+        arr[idx++]=vns[(num-1)*3+1];
+        arr[idx++]=vns[(num-1)*3+2];
+        while (*line!=' '&&*line!='\n'){
+            line++;
+        }
+        line++;
+    }
+}
+
+obj_t *load_obj(const char *filename){
+    FILE *file= fopen(filename,"r");
+    char line[256];
+    int vn_idx=0;
+    int vt_idx=0;
+    int v_idx=0;
+    int f_idx=0;// 先获取数量 构造容器
+    while (fgets(line,256,file)!=NULL){
+        if (line[0]=='v'&&line[1]=='n'&&line[2]==' '){
+            vn_idx+=3;
+        }else if (line[0]=='v'&&line[1]=='t'&&line[2]==' '){
+            vt_idx+=2;
+        }else if (line[0]=='v'&&line[1]==' '){
+            v_idx+=3;
+        }else if (line[0]=='f'&&line[1]==' '){
+            f_idx+=3*(3+3+2);
+        }
+    }
+    float vns[vn_idx];
+    float vts[vt_idx];
+    float vs[v_idx];
+    float fs[f_idx];
+    // 开始填充数据
+    fseek(file, 0, SEEK_SET);
+    vn_idx=0;
+    vt_idx=0;
+    v_idx=0;
+    f_idx=0;
+    while (fgets(line,256,file)!=NULL){
+        if (line[0]=='v'&&line[1]=='n'&&line[2]==' '){
+            parse_float(vns+vn_idx,line+3);
+            vn_idx+=3;
+        }else if (line[0]=='v'&&line[1]=='t'&&line[2]==' '){
+            parse_float(vts+vt_idx,line+3);
+            vt_idx+=2;
+        }else if (line[0]=='v'&&line[1]==' '){
+            parse_float(vs+v_idx,line+2);
+            v_idx+=3;
+        }else if (line[0]=='f'&&line[1]==' '){
+            parse_face(fs+f_idx,line+2,vs,vts,vns);
+            f_idx+=3*(3+3+2);
+        }
+    }
+    fclose(file);
+    // 组合数据
+    obj_t *obj=malloc(sizeof(obj_t));
+    obj->vao= create_vao(); // 创建并绑定了
+    glBufferData(GL_ARRAY_BUFFER, f_idx*4, fs, GL_STATIC_DRAW);
+    vertex_attr(0,3,8,0);
+    vertex_attr(1,2,8,3);
+    vertex_attr(2,3,8,5);
+    obj->point_count=f_idx/(3+3+2);
+    return obj;
+}
+
+void close_obj(obj_t *obj){
+    close_vao(obj->vao);
+    free(obj);
 }

@@ -19,7 +19,12 @@ typedef struct{
     void *data;
 }image_t;
 
-uint32_t open_shader(const char *vert,const char *frag);
+typedef struct{
+    uint32_t vao;
+    int point_count;
+}obj_t;
+
+uint32_t open_shader(const char *vert,const char *frag,const char *geom);
 void close_shader(uint32_t shader);
 
 uint32_t create_vao();
@@ -40,5 +45,8 @@ void uniform_v3(uint32_t shader,const char *name,float x,float y,float z);
 void uniform_f1(uint32_t shader,const char *name,float val);
 
 frame_buff_t *create_frame_buff(int width,int height);
+
+obj_t *load_obj(const char *filename);
+void close_obj(obj_t *obj);
 
 #endif
