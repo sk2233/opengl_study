@@ -34,13 +34,9 @@ int main(){
     uint32_t skyShader = open_shader("/Users/sky/Documents/c/open_gl/sky.vert", "/Users/sky/Documents/c/open_gl/sky.frag");
 
     uint32_t cubeVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vt), cube_vt, GL_STATIC_DRAW);
-    vertex_attr(0,3,5,0);
-    vertex_attr(1,2,5,3);
-    uint32_t planVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(plan_vt), plan_vt, GL_STATIC_DRAW);
-    vertex_attr(0,3,5,0);
-    vertex_attr(1,2,5,3);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vn), cube_vn, GL_STATIC_DRAW);
+    vertex_attr(0,3,6,0);
+    vertex_attr(1,3,6,3);
     uint32_t skyVao= create_vao(); // 创建并绑定了
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_v), cube_v, GL_STATIC_DRAW);
     vertex_attr(0,3,3,0);
@@ -60,7 +56,6 @@ int main(){
     uniform_mat4(skyShader, "projection", proj);
 
     uint32_t cube_tex= create_texture("/Users/sky/Documents/c/open_gl/res/container2.png",GL_TEXTURE0);
-    uint32_t plan_tex= create_texture("/Users/sky/Documents/c/open_gl/res/81847920.jpg",GL_TEXTURE0);
     const char* files[]={"/Users/sky/Documents/c/open_gl/res/cube/right.jpg","/Users/sky/Documents/c/open_gl/res/cube/left.jpg","/Users/sky/Documents/c/open_gl/res/cube/top.jpg",
     "/Users/sky/Documents/c/open_gl/res/cube/bottom.jpg","/Users/sky/Documents/c/open_gl/res/cube/front.jpg","/Users/sky/Documents/c/open_gl/res/cube/back.jpg"};
     uint32_t sky_tex= create_cubemap(files);
@@ -81,11 +76,12 @@ int main(){
         glDrawArrays(GL_TRIANGLES,0,36);
 
         glUseProgram(shader);
-        // 通用设置
         uniform_mat4(shader, "view", view);
+        uniform_v3(shader,"cameraPos",camera.pos[0],camera.pos[1],camera.pos[3]);
+        set_texture(GL_TEXTURE0,cube_tex);
+        set_cubemap(GL_TEXTURE0,sky_tex);
         // 绘制 cube
         glBindVertexArray(cubeVao);
-        set_texture(GL_TEXTURE0,cube_tex);
         model = GLM_MAT4_IDENTITY;
         translate(model,-1,0,-1);
         uniform_mat4(shader, "model", model);
@@ -94,17 +90,11 @@ int main(){
         translate(model,2,0,0);
         uniform_mat4(shader, "model", model);
         glDrawArrays(GL_TRIANGLES,0,36);
-        // 绘制 plan
-        glBindVertexArray(planVao);
-        set_texture(GL_TEXTURE0,plan_tex);
-        uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
-        glDrawArrays(GL_TRIANGLES,0,6);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     close_vao(cubeVao);
-    close_vao(planVao);
     close_shader(shader);
     glfwTerminate();
     return 0;
