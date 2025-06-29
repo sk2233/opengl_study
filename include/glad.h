@@ -13,6 +13,12 @@ typedef struct{
     uint32_t render_buff;
 }frame_buff_t;
 
+typedef struct{
+    int width;
+    int height;
+    void *data;
+}image_t;
+
 uint32_t open_shader(const char *vert,const char *frag);
 void close_shader(uint32_t shader);
 
@@ -23,6 +29,9 @@ void vertex_attr(uint32_t index, int32_t size,int step,int offset);
 
 uint32_t create_texture(const char *filename,uint32_t idx);
 void set_texture(uint32_t idx,uint32_t texture);
+
+uint32_t create_cubemap(const char **filenames);
+void set_cubemap(uint32_t idx,uint32_t texture);
 
 // 快捷使用
 void uniform_i1(uint32_t shader,const char *name,int32_t val);

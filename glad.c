@@ -104,6 +104,24 @@ bool is_png(const char *filename){
     return filename[1]=='p'&&filename[2]=='n'&&filename[3]=='g';
 }
 
+image_t *open_image(const char *filename){
+    image_t *image=malloc(sizeof(image_t));
+    FILE *file= fopen(filename,"r");
+    if (is_png(filename)){ // png
+        ok_png png= ok_png_read(file,OK_PNG_COLOR_FORMAT_RGBA);
+        image->width=(int)png.width;
+        image->height=(int)png.height;
+        image->data=png.data;
+    }else{ // jpg
+        ok_jpg jpg= ok_jpg_read(file,OK_JPG_COLOR_FORMAT_RGBA);
+        image->width=(int)jpg.width;
+        image->height=(int)jpg.height;
+        image->data=jpg.data;
+    }
+    fclose(file);
+    return image;
+}
+
 uint32_t create_texture(const char *filename,uint32_t idx){
     uint32_t texture;
     glActiveTexture(idx);
@@ -115,30 +133,39 @@ uint32_t create_texture(const char *filename,uint32_t idx){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
-    FILE *file= fopen(filename,"r");
-    if (is_png(filename)){ // png
-        ok_png png= ok_png_read(file,OK_PNG_COLOR_FORMAT_RGBA);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (int )png.width, (int )png.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, png.data);
-    }else{ // jpg
-        ok_jpg jpg= ok_jpg_read(file,OK_JPG_COLOR_FORMAT_RGBA);
-        // 纠正图像
-        uint8_t *data= malloc(jpg.width*jpg.height*4);
-        for (int y=0;y<jpg.height;y++){
-            memcpy(data+(jpg.height-y-1)*jpg.width*4,jpg.data+y*jpg.width*4,jpg.width*4);
-        }
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (int )jpg.width, (int )jpg.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        free(data);
-    }
+    image_t *img= open_image(filename);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height ,0, GL_RGBA, GL_UNSIGNED_BYTE,img->data);
     glGenerateMipmap(GL_TEXTURE_2D);
-    fclose(file);
     return texture;
 }
 
+uint32_t create_cubemap(const char *filenames[]){ // 必须指定 6 个
+    uint32_t texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+    // 添加图片
+    for (int i = 0; i < 6; ++i){
+        image_t *img= open_image(filenames[i]);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,0, GL_RGB, img->width, img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+    }
+    // 设置选项
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    return texture;
+}
 
 // 设置第几号纹理的具体内容
 void set_texture(uint32_t idx,uint32_t texture){
     glActiveTexture(idx);
     glBindTexture(GL_TEXTURE_2D, texture);
+}
+
+void set_cubemap(uint32_t idx,uint32_t texture){
+    glActiveTexture(idx);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 }
 
 void uniform_i1(uint32_t shader,const char *name,int32_t val){

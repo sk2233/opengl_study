@@ -31,7 +31,7 @@ int main(){
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/depth_test.vert", "/Users/sky/Documents/c/open_gl/depth_test.frag");
-    uint32_t winShader = open_shader("/Users/sky/Documents/c/open_gl/rect.vert", "/Users/sky/Documents/c/open_gl/rect.frag");
+    uint32_t skyShader = open_shader("/Users/sky/Documents/c/open_gl/sky.vert", "/Users/sky/Documents/c/open_gl/sky.frag");
 
     uint32_t cubeVao= create_vao(); // 创建并绑定了
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vt), cube_vt, GL_STATIC_DRAW);
@@ -41,10 +41,9 @@ int main(){
     glBufferData(GL_ARRAY_BUFFER, sizeof(plan_vt), plan_vt, GL_STATIC_DRAW);
     vertex_attr(0,3,5,0);
     vertex_attr(1,2,5,3);
-    uint32_t winVao= create_vao(); // 创建并绑定了
-    glBufferData(GL_ARRAY_BUFFER, sizeof(win_vt), win_vt, GL_STATIC_DRAW);
-    vertex_attr(0,2,4,0);
-    vertex_attr(1,2,4,2);
+    uint32_t skyVao= create_vao(); // 创建并绑定了
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_v), cube_v, GL_STATIC_DRAW);
+    vertex_attr(0,3,3,0);
 
     vec4* view = GLM_MAT4_IDENTITY;
     vec4* proj = GLM_MAT4_IDENTITY;
@@ -53,28 +52,41 @@ int main(){
     uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
     uniform_mat4(shader, "view", view);
     uniform_mat4(shader, "projection", proj);
+    glUseProgram(skyShader);
+    vec4* model = GLM_MAT4_IDENTITY;
+    scale(model,50,50,50);
+    uniform_mat4(skyShader, "model", model);
+    uniform_mat4(skyShader, "view", view);
+    uniform_mat4(skyShader, "projection", proj);
 
     uint32_t cube_tex= create_texture("/Users/sky/Documents/c/open_gl/res/container2.png",GL_TEXTURE0);
     uint32_t plan_tex= create_texture("/Users/sky/Documents/c/open_gl/res/81847920.jpg",GL_TEXTURE0);
-
-    frame_buff_t *frame_buff = create_frame_buff(1280*2,720*2); // WHY
+    const char* files[]={"/Users/sky/Documents/c/open_gl/res/cube/right.jpg","/Users/sky/Documents/c/open_gl/res/cube/left.jpg","/Users/sky/Documents/c/open_gl/res/cube/top.jpg",
+    "/Users/sky/Documents/c/open_gl/res/cube/bottom.jpg","/Users/sky/Documents/c/open_gl/res/cube/front.jpg","/Users/sky/Documents/c/open_gl/res/cube/back.jpg"};
+    uint32_t sky_tex= create_cubemap(files);
 
     // glEnable(GL_CULL_FACE); // 背面剔除
+    glEnable(GL_DEPTH_TEST); // 正常渲染启动深度测试
     while (!glfwWindowShouldClose(window)){
-        glBindFramebuffer(GL_FRAMEBUFFER,frame_buff->frame_buff); // 先渲染到 frame_buff
-        glEnable(GL_DEPTH_TEST); // 正常渲染启动深度测试
+        camera_update(&camera,window);
+        camera_view(&camera,view);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        camera_update(&camera,window);
 
-        camera_view(&camera,view);
+        // 先绘制天空盒
+        glUseProgram(skyShader);
+        uniform_mat4(skyShader, "view", view);
+        glBindVertexArray(skyVao);
+        set_cubemap(GL_TEXTURE0,sky_tex);
+        glDrawArrays(GL_TRIANGLES,0,36);
+
         glUseProgram(shader);
         // 通用设置
         uniform_mat4(shader, "view", view);
         // 绘制 cube
         glBindVertexArray(cubeVao);
         set_texture(GL_TEXTURE0,cube_tex);
-        vec4* model = GLM_MAT4_IDENTITY;
+        model = GLM_MAT4_IDENTITY;
         translate(model,-1,0,-1);
         uniform_mat4(shader, "model", model);
         glDrawArrays(GL_TRIANGLES,0,36);
@@ -86,16 +98,6 @@ int main(){
         glBindVertexArray(planVao);
         set_texture(GL_TEXTURE0,plan_tex);
         uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
-        glDrawArrays(GL_TRIANGLES,0,6);
-
-        // 再渲染回去
-        glBindFramebuffer(GL_FRAMEBUFFER,0);
-        glDisable(GL_DEPTH_TEST); // 绘制平面不要使用深度测试
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(winShader);
-        glBindVertexArray(winVao);
-        set_texture(GL_TEXTURE0,frame_buff->text_buff);
         glDrawArrays(GL_TRIANGLES,0,6);
 
         glfwSwapBuffers(window);
