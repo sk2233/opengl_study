@@ -24,9 +24,15 @@ int main(){
     glfwSetKeyCallback(window,key_callback);
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/shader/geom.vert", "/Users/sky/Documents/c/open_gl/shader/geom.frag","/Users/sky/Documents/c/open_gl/shader/geom.geom");
+    uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/shader/obj.vert", "/Users/sky/Documents/c/open_gl/shader/obj.frag",NULL);
     glUseProgram(shader);
-
+    vec4* view = GLM_MAT4_IDENTITY;
+    vec4* proj = GLM_MAT4_IDENTITY;
+    glm_perspective(GLM_PI_4,16.0f/9,0.1f,100,proj);
+    glUseProgram(shader);
+    uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
+    uniform_mat4(shader, "view", view);
+    uniform_mat4(shader, "projection", proj);
 
     obj_t *obj=load_obj("/Users/sky/Documents/c/open_gl/res/reisen.obj");
 
@@ -35,14 +41,16 @@ int main(){
     // glEnable(GL_CULL_FACE); // 背面剔除
     glEnable(GL_DEPTH_TEST); // 正常渲染启动深度测试
     while (!glfwWindowShouldClose(window)){
-        // camera_update(&camera,window);
-        // camera_view(&camera,view);
+        camera_update(&camera,window);
+        camera_view(&camera,view);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader);
+        uniform_mat4(shader, "view", view);
+        set_texture(GL_TEXTURE0,text);
         glBindVertexArray(obj->vao);
-        glDrawArrays(GL_POINTS,0,obj->point_count);
+        // glDrawArrays(GL_TRAN,0,obj->point_count);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
