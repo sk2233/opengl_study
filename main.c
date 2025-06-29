@@ -25,34 +25,27 @@ int main(){
     glfwSetKeyCallback(window,key_callback);
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/shader/obj.vert", "/Users/sky/Documents/c/open_gl/shader/obj.frag",NULL);
+    uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/shader/light.vert", "/Users/sky/Documents/c/open_gl/shader/light.frag",NULL);
     vec4* view = GLM_MAT4_IDENTITY;
     vec4* proj = GLM_MAT4_IDENTITY;
     glm_perspective(GLM_PI_4,16.0f/9,0.1f,100,proj);
     glUseProgram(shader);
-    uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
     uniform_mat4(shader, "view", view);
     uniform_mat4(shader, "projection", proj);
+    uniform_v3(shader,"lightPos",3,3,3);
+    uniform_v3(shader,"viewPos",camera.pos[0],camera.pos[1],camera.pos[2]);
 
-    obj_t *obj=load_obj("/Users/sky/Documents/c/open_gl/res/reisen.obj");
-    // 一个 vao 可以绑定多个 vbo create_vao 内部会默认绑定一个
-    uint32_t vbo;
-    glGenBuffers(1,&vbo); // 再创建绑定一个 vbo
-    glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    static float buff[1000*3];
-    for (int i = 0; i < 1000; ++i){
-        buff[i*3]=(float)(rand()%1000)/10;
-        buff[i*3+1]=(float)(rand()%1000)/10;
-        buff[i*3+2]=(float)(rand()%1000)/10;
-    }
-    glBufferData(GL_ARRAY_BUFFER,sizeof(buff),buff,GL_STATIC_DRAW);
-    vertex_attr(3,3,3,0);
-    glVertexAttribDivisor(3,1);// 指定属性 3 每 1 个实例要切换一下参数 多实例绘制默认属性全是一致的
+    uint32_t vao=create_vao();
+    glBufferData(GL_ARRAY_BUFFER,sizeof(plan_vnt),plan_vnt,GL_STATIC_DRAW);
+    vertex_attr(0,3,8,0);
+    vertex_attr(1,3,8,3);
+    vertex_attr(2,2,8,6);
 
-    uint32_t text = create_texture("/Users/sky/Documents/c/open_gl/res/reisen.png",GL_TEXTURE0);
+    uint32_t text = create_texture("/Users/sky/Documents/c/open_gl/res/container2.png",GL_TEXTURE0);
 
     // glEnable(GL_CULL_FACE); // 背面剔除
     glEnable(GL_DEPTH_TEST); // 正常渲染启动深度测试
+    // glEnable(GL_FRAMEBUFFER_SRGB); // 伽马矫正
     while (!glfwWindowShouldClose(window)){
         camera_update(&camera,window);
         camera_view(&camera,view);
@@ -61,14 +54,15 @@ int main(){
 
         glUseProgram(shader);
         uniform_mat4(shader, "view", view);
+        uniform_v3(shader,"viewPos",camera.pos[0],camera.pos[1],camera.pos[2]);
         set_texture(GL_TEXTURE0,text);
-        glBindVertexArray(obj->vao);
-        glDrawArraysInstanced(GL_TRIANGLES,0,obj->point_count,1000);
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES,0,6);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    close_obj(obj);
+    close_vao(vao);
     close_shader(shader);
     glfwTerminate();
     return 0;

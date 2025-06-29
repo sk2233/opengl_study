@@ -154,8 +154,8 @@ uint32_t create_texture(const char *filename,uint32_t idx){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
-    image_t *img= open_image(filename);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height ,0, GL_RGBA, GL_UNSIGNED_BYTE,img->data);
+    image_t *img= open_image(filename); // 纹理使用 GL_SRGB 自动进行伽马矫正
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img->width, img->height ,0, GL_RGBA, GL_UNSIGNED_BYTE,img->data);
     glGenerateMipmap(GL_TEXTURE_2D);
     return texture;
 }
