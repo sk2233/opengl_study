@@ -7,6 +7,12 @@
 #include <stdlib.h>
 #include "cglm/cglm.h"
 
+typedef struct{
+    uint32_t frame_buff;
+    uint32_t text_buff;
+    uint32_t render_buff;
+}frame_buff_t;
+
 uint32_t open_shader(const char *vert,const char *frag);
 void close_shader(uint32_t shader);
 
@@ -23,5 +29,7 @@ void uniform_i1(uint32_t shader,const char *name,int32_t val);
 void uniform_mat4(uint32_t shader,const char *name,mat4 val);
 void uniform_v3(uint32_t shader,const char *name,float x,float y,float z);
 void uniform_f1(uint32_t shader,const char *name,float val);
+
+frame_buff_t *create_frame_buff(int width,int height);
 
 #endif
