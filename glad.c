@@ -201,6 +201,10 @@ void uniform_v3(uint32_t shader,const char *name,float x,float y,float z){
     glUniform3f(glGetUniformLocation(shader,name),x,y,z);
 }
 
+void uniform_v2(uint32_t shader,const char *name,float x,float y){
+    glUniform2f(glGetUniformLocation(shader,name),x,y);
+}
+
 void uniform_f1(uint32_t shader,const char *name,float val){
     glUniform1f(glGetUniformLocation(shader,name),val);
 }
