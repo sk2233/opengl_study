@@ -4,6 +4,7 @@
 #include <ok_png.h>
 #include <glfw.h>
 #include <math.h>
+#include <string.h>
 #include "glad.h"
 #include "cglm/cglm.h"
 #include "mat.h"
@@ -25,37 +26,44 @@ int main(){
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     uint32_t shader = open_shader("/Users/sky/Documents/c/open_gl/shader/obj.vert", "/Users/sky/Documents/c/open_gl/shader/obj.frag",NULL);
+    vec4* view = GLM_MAT4_IDENTITY;
+    vec4* proj = GLM_MAT4_IDENTITY;
+    glm_perspective(GLM_PI_4,16.0f/9,0.1f,100,proj);
+    glUseProgram(shader);
+    uniform_mat4(shader, "model", GLM_MAT4_IDENTITY);
+    uniform_mat4(shader, "view", view);
+    uniform_mat4(shader, "projection", proj);
 
     obj_t *obj=load_obj("/Users/sky/Documents/c/open_gl/res/reisen.obj");
     // 一个 vao 可以绑定多个 vbo create_vao 内部会默认绑定一个
-    // uint32_t vbo;
-    // glGenBuffers(1,&vbo); // 再创建绑定一个 vbo
-    // glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    // static float buff[100*2];
-    // int idx=0;
-    // for (int i = 0; i < 10; ++i){
-    //     for (int j = 0; j < 10; ++j){
-    //         buff[idx++]=(float)i/5-1;
-    //         buff[idx++]=(float)j/5-1;
-    //     }
-    // } // 设置数据与属性
-    // glBufferData(GL_ARRAY_BUFFER,sizeof(buff),buff,GL_STATIC_DRAW);
-    // vertex_attr(2,2,2,0);
-    // glVertexAttribDivisor(2,1);// 指定属性 2 每 1 个实例要切换一下参数 多实例绘制默认属性全是一致的
+    uint32_t vbo;
+    glGenBuffers(1,&vbo); // 再创建绑定一个 vbo
+    glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    static float buff[1000*3];
+    for (int i = 0; i < 1000; ++i){
+        buff[i*3]=(float)(rand()%1000)/10;
+        buff[i*3+1]=(float)(rand()%1000)/10;
+        buff[i*3+2]=(float)(rand()%1000)/10;
+    }
+    glBufferData(GL_ARRAY_BUFFER,sizeof(buff),buff,GL_STATIC_DRAW);
+    vertex_attr(3,3,3,0);
+    glVertexAttribDivisor(3,1);// 指定属性 3 每 1 个实例要切换一下参数 多实例绘制默认属性全是一致的
 
     uint32_t text = create_texture("/Users/sky/Documents/c/open_gl/res/reisen.png",GL_TEXTURE0);
 
     // glEnable(GL_CULL_FACE); // 背面剔除
     glEnable(GL_DEPTH_TEST); // 正常渲染启动深度测试
     while (!glfwWindowShouldClose(window)){
-        // camera_update(&camera,window);
-        // camera_view(&camera,view);
+        camera_update(&camera,window);
+        camera_view(&camera,view);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader);
-        glBindVertexArray(rect_vao);
-        glDrawArraysInstanced(GL_TRIANGLES,0,6,100);
+        uniform_mat4(shader, "view", view);
+        set_texture(GL_TEXTURE0,text);
+        glBindVertexArray(obj->vao);
+        glDrawArraysInstanced(GL_TRIANGLES,0,obj->point_count,1000);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
