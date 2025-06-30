@@ -154,7 +154,7 @@ uint32_t create_texture(const char *filename,uint32_t idx){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
-    image_t *img= open_image(filename); // 纹理使用 GL_SRGB 自动进行伽马矫正
+    image_t *img= open_image(filename);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img->width, img->height ,0, GL_RGBA, GL_UNSIGNED_BYTE,img->data);
     glGenerateMipmap(GL_TEXTURE_2D);
     return texture;
@@ -252,6 +252,29 @@ frame_buff_t *create_depth_frame_buff(int width,int height){
     // 不需要写入颜色信息
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+    return frame_buff;
+}
+
+frame_buff_t *create_depth_cube_frame(int width,int height){
+    frame_buff_t *frame_buff=malloc(sizeof(frame_buff_t));
+    glGenFramebuffers(1, &frame_buff->frame_buff);
+    glBindFramebuffer(GL_FRAMEBUFFER, frame_buff->frame_buff);
+    glGenTextures(1, &frame_buff->text_buff);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, frame_buff->text_buff);
+    for (GLuint i = 0; i < 6; ++i){
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, frame_buff->text_buff, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+        printf("create_depth_cube_frame err\n");
+    }
     return frame_buff;
 }
 

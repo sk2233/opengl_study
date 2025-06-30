@@ -47,6 +47,7 @@ void uniform_f1(uint32_t shader,const char *name,float val);
 
 frame_buff_t *create_frame_buff(int width,int height);
 frame_buff_t *create_depth_frame_buff(int width,int height);
+frame_buff_t *create_depth_cube_frame(int width,int height);
 
 obj_t *load_obj(const char *filename);
 void close_obj(obj_t *obj);
