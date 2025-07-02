@@ -10,6 +10,7 @@
 typedef struct{
     uint32_t frame_buff;
     uint32_t text_buff;
+    uint32_t text_buff2;
     uint32_t render_buff;
 }frame_buff_t;
 
@@ -46,6 +47,7 @@ void uniform_v2(uint32_t shader,const char *name,float x,float y);
 void uniform_f1(uint32_t shader,const char *name,float val);
 
 frame_buff_t *create_frame_buff(int width,int height);
+frame_buff_t *create_frame_buff2(int width,int height);
 frame_buff_t *create_depth_frame_buff(int width,int height);
 frame_buff_t *create_depth_cube_frame(int width,int height);
 

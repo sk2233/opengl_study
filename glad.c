@@ -215,21 +215,55 @@ frame_buff_t *create_frame_buff(int width,int height){
     glBindFramebuffer(GL_FRAMEBUFFER,frame_buff->frame_buff); // 绑定 buff 方便下面对其配置 0 是屏幕输出
     // 设置 buff 的纹理信息
     glGenTextures(1,&frame_buff->text_buff);
-    glBindTexture(GL_TEXTURE_2D, frame_buff->text_buff);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL); // 这里并不需要填充颜色
+    glBindTexture(GL_TEXTURE_2D, frame_buff->text_buff); // 开启 HDR 不限制在 0~1
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL); // 这里并不需要填充颜色
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frame_buff->text_buff, 0); // 将它附加到当前绑定的帧缓冲对象
-    // 设置 buff 的模板缓冲与深度缓冲
-    glGenRenderbuffers(1, &frame_buff->render_buff);
-    glBindRenderbuffer(GL_RENDERBUFFER, frame_buff->render_buff);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, frame_buff->render_buff); // 附加到 frame_buff
     // 还原缓冲区
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
         printf("create_frame_buff err");
     }
+    return frame_buff;
+}
+
+
+frame_buff_t *create_frame_buff2(int width,int height){
+    frame_buff_t *frame_buff=malloc(sizeof(frame_buff_t));
+    glGenFramebuffers(1,&frame_buff->frame_buff); // 创建 buff
+    glBindFramebuffer(GL_FRAMEBUFFER,frame_buff->frame_buff); // 绑定 buff 方便下面对其配置 0 是屏幕输出
+    // 设置 buff 的纹理信息
+    glGenTextures(1,&frame_buff->text_buff);
+    glBindTexture(GL_TEXTURE_2D, frame_buff->text_buff); // 开启 HDR 不限制在 0~1
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL); // 这里并不需要填充颜色
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frame_buff->text_buff, 0); // 将它附加到当前绑定的帧缓冲对象
+    glGenTextures(1,&frame_buff->text_buff2);
+    glBindTexture(GL_TEXTURE_2D, frame_buff->text_buff2); // 开启 HDR 不限制在 0~1
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL); // 这里并不需要填充颜色
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, frame_buff->text_buff2, 0); // 将它附加到当前绑定的帧缓冲对象
+    // 设置 buff 的模板缓冲与深度缓冲
+    glGenRenderbuffers(1, &frame_buff->render_buff);
+    glBindRenderbuffer(GL_RENDERBUFFER, frame_buff->render_buff);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, frame_buff->render_buff); // 附加到 frame_buff
+    // 设置渲染到两个面并进行检查
+    uint32_t attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+        printf("create_frame_buff err");
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return frame_buff;
 }
 
