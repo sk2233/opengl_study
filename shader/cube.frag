@@ -23,7 +23,7 @@ uniform Test test;
 
 void main()
 {
-    vec3 ambient = vec3(0.2f) * vec3(texture(diffuse, TexCoords));; // 环境光照
+    vec3 ambient = vec3(0.2f) * vec3(texture(diffuse, TexCoords)); // 环境光照
 
     vec3 norm = normalize(Normal); // 都是单位的
     vec3 lightDir3 = normalize(lightPos - FragPos);

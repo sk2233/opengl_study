@@ -10,6 +10,9 @@
 #include "mat.h"
 #include "camera.h"
 #include "data.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 static camera_t camera={.pos={0,-2,0},.front = {0,1,0}};
 
